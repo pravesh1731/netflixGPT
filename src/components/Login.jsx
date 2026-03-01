@@ -1,8 +1,19 @@
 import React, { useRef, useState } from "react";
 import Header from "./Header";
 import { checkValidData } from "../utils/validate";
+import {
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  updateProfile,
+} from "firebase/auth";
+import { auth } from "../utils/firebase";
+import { useNavigate } from "react-router-dom";
+import { useDispatch} from "react-redux";
 
 const Login = () => {
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
+  
   const [isSignInForm, setIsSignInForm] = useState(true);
   const [errorMessage, setErrorMessage] = useState(null);
   const name = useRef(null);
@@ -11,11 +22,68 @@ const Login = () => {
 
   const handleButtonClick = () => {
     const message = checkValidData(email.current.value, password.current.value);
-   setErrorMessage(message ? message.message : null);
+    setErrorMessage(message ? message.message : null);
 
-   // SignIn / SignUp
+    if (message) return;
+    if (!isSignInForm) {
+      //signup
+      createUserWithEmailAndPassword(
+        auth,
+        email.current.value,
+        password.current.value,
+      )
+        .then((userCredential) => {
+          // Signed up
+          const user = userCredential.user;
+          updateProfile(auth.currentUser, {
+            displayName: name.current.value,
+            photoURL: "https://avatars.githubusercontent.com/u/157206714?v=4",
+          })
+            .then(() => {
+              // Profile updated!
+              const { uid, email, displayName, photoURL } = auth.currentUser;
+              dispatch(
+                addUser({
+                  uid: uid,
+                  email: email,
+                  displayName: displayName,
+                  photoURL: photoURL,
+                }),
+              );
+              navigate("/browse");
+            })
+            .catch((error) => {
+              // An error occurred
+              // ...
+            });
 
-  }
+          // ...
+        })
+        .catch((error) => {
+          const errorCode = error.code;
+          const errorMessage = error.message;
+          setErrorMessage(errorCode + " " + errorMessage);
+          // ..
+        });
+    } else {
+      signInWithEmailAndPassword(
+        auth,
+        email.current.value,
+        password.current.value,
+      )
+        .then((userCredential) => {
+          // Signed in
+          const user = userCredential.user;
+          navigate("/browse");
+          // ...
+        })
+        .catch((error) => {
+          const errorCode = error.code;
+          const errorMessage = error.message;
+          setErrorMessage(errorCode + " " + errorMessage);
+        });
+    }
+  };
 
   const toggleSignInForm = () => {
     setIsSignInForm(!isSignInForm);
@@ -31,13 +99,16 @@ const Login = () => {
           alt="banner"
         />
       </div>
-      <form onSubmit={(e) => e.preventDefault()} className="absolute bg-black/80 w-3/12 my-36 mx-auto right-0 left-0 p-12">
+      <form
+        onSubmit={(e) => e.preventDefault()}
+        className="absolute bg-black/80 w-3/12 my-36 mx-auto right-0 left-0 p-12"
+      >
         <h2 className="text-white text-2xl p-2 mt-4">
           {!isSignInForm ? "Sign Up" : "Sign In"}
         </h2>
         {!isSignInForm && (
           <input
-           ref={name}
+            ref={name}
             type="text"
             placeholder="Enter Name"
             className="p-2 m-2 w-full bg-gray-800 text-white rounded-lg"
@@ -55,14 +126,17 @@ const Login = () => {
           placeholder="Password"
           className="p-2 m-2 w-full bg-gray-800 text-white rounded-lg"
         />
-        <p className="text-red-500">{errorMessage}</p>
+        <p className="text-red-500 p-2">{errorMessage}</p>
 
-        <button className=" p-2 m-2 bg-red-500 text-white w-full rounded-lg " onClick={handleButtonClick}>
+        <button
+          className=" p-2 m-2 bg-red-500 text-white w-full rounded-lg "
+          onClick={handleButtonClick}
+        >
           {!isSignInForm ? "Sign Up" : "Sign In"}
         </button>
         <p className="text-white p-3 mt-10">
           New to Netflix?{" "}
-          <span 
+          <span
             className="text-red-500 cursor-pointer"
             onClick={toggleSignInForm}
           >
