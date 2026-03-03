@@ -8,7 +8,7 @@ import {
 } from "firebase/auth";
 import { auth } from "../utils/firebase";
 import { useDispatch} from "react-redux";
-import { USER_AVATAR } from "../utils/constant";
+import { BG_URL, USER_AVATAR } from "../utils/constant";
 
 const Login = () => {
   const dispatch = useDispatch();
@@ -92,7 +92,7 @@ const Login = () => {
       <div>
         <img
           className="absolute"
-          src="https://assets.nflxext.com/ffe/siteui/vlv3/5eb03855-b753-4788-b9b3-0cc29e3d2891/web/IN-en-20260223-TRIFECTA-perspective_7bcba0fc-d5a5-42f6-b4ed-2ca56a458c61_large.jpg"
+          src={BG_URL}
           alt="banner"
         />
       </div>
